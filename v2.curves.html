@@ -41,7 +41,6 @@
     </nav>
 
     <table id="controls" style="margin-top: 30px;">
-
         <tr>
             <td id="fps" colspan="2" align="right"></td>
         </tr>
@@ -100,8 +99,10 @@
         Loading...
     </div>
 
-    <embed src="music/racer.mp3" autostart="true" width="2" height="0">
-
+    <audio id='music'>
+        <source src="music/racer.ogg">
+        <source src="music/racer.mp3">
+    </audio>
     <span id="mute"></span>
 
     <script src="js/stats.js"></script>
@@ -114,6 +115,14 @@
         var step = 1 / fps; // how long is each frame (in seconds)
         var width = 1024; // logical canvas width
         var height = 768; // logical canvas height
+        var centrifugal = 0.3; // centrifugal force multiplier when going around curves
+        var offRoadDecel = 0.99; // speed multiplier when off road (e.g. you lose 2% speed each update frame)
+        var skySpeed = 0.001; // background sky layer scroll speed when going around curve (or up hill)
+        var hillSpeed = 0.002; // background hill layer scroll speed when going around curve (or up hill)
+        var treeSpeed = 0.003; // background tree layer scroll speed when going around curve (or up hill)
+        var skyOffset = 0; // current sky scroll offset
+        var hillOffset = 0; // current hill scroll offset
+        var treeOffset = 0; // current tree scroll offset
         var segments = []; // array of road segments
         var stats = Game.stats('fps'); // mr.doobs FPS counter
         var canvas = Dom.get('canvas'); // our canvas...
@@ -156,15 +165,23 @@
 
         function update(dt) {
 
+            var playerSegment = findSegment(position + playerZ);
+            var speedPercent = speed / maxSpeed;
+            var dx = dt * 2 *
+            speedPercent; // at top speed, should be able to cross from left to right (-1 to +1) in 1 second
+
             position = Util.increase(position, dt * speed, trackLength);
 
-            var dx = dt * 2 * (speed /
-            maxSpeed); // at top speed, should be able to cross from left to right (-1 to 1) in 1 second
+            skyOffset = Util.increase(skyOffset, skySpeed * playerSegment.curve * speedPercent, 1);
+            hillOffset = Util.increase(hillOffset, hillSpeed * playerSegment.curve * speedPercent, 1);
+            treeOffset = Util.increase(treeOffset, treeSpeed * playerSegment.curve * speedPercent, 1);
 
             if (keyLeft)
                 playerX = playerX - dx;
             else if (keyRight)
                 playerX = playerX + dx;
+
+            playerX = playerX - (dx * speedPercent * playerSegment.curve * centrifugal);
 
             if (keyFaster)
                 speed = Util.accelerate(speed, accel, dt);
@@ -188,13 +205,17 @@
         function render() {
 
             var baseSegment = findSegment(position);
+            var basePercent = Util.percentRemaining(position, segmentLength);
             var maxy = height;
+
+            var x = 0;
+            var dx = -(baseSegment.curve * basePercent);
 
             ctx.clearRect(0, 0, width, height);
 
-            Render.background(ctx, background, width, height, BACKGROUND.SKY);
-            Render.background(ctx, background, width, height, BACKGROUND.HILLS);
-            Render.background(ctx, background, width, height, BACKGROUND.TREES);
+            Render.background(ctx, background, width, height, BACKGROUND.SKY, skyOffset);
+            Render.background(ctx, background, width, height, BACKGROUND.HILLS, hillOffset);
+            Render.background(ctx, background, width, height, BACKGROUND.TREES, treeOffset);
 
             var n, segment;
 
@@ -204,10 +225,13 @@
                 segment.looped = segment.index < baseSegment.index;
                 segment.fog = Util.exponentialFog(n / drawDistance, fogDensity);
 
-                Util.project(segment.p1, (playerX * roadWidth), cameraHeight, position - (segment.looped ? trackLength :
-                    0), cameraDepth, width, height, roadWidth);
-                Util.project(segment.p2, (playerX * roadWidth), cameraHeight, position - (segment.looped ? trackLength :
-                    0), cameraDepth, width, height, roadWidth);
+                Util.project(segment.p1, (playerX * roadWidth) - x, cameraHeight, position - (segment.looped ?
+                    trackLength : 0), cameraDepth, width, height, roadWidth);
+                Util.project(segment.p2, (playerX * roadWidth) - x - dx, cameraHeight, position - (segment.looped ?
+                    trackLength : 0), cameraDepth, width, height, roadWidth);
+
+                x = x + dx;
+                dx = dx + segment.curve;
 
                 if ((segment.p1.camera.z <= cameraDepth) || // behind us
                     (segment.p2.screen.y >= maxy)) // clip by (already rendered) segment
@@ -238,28 +262,88 @@
         // BUILD ROAD GEOMETRY
         //=========================================================================
 
+        function addSegment(curve) {
+            var n = segments.length;
+            segments.push({
+                index: n,
+                p1: {
+                    world: {
+                        z: n * segmentLength
+                    },
+                    camera: {},
+                    screen: {}
+                },
+                p2: {
+                    world: {
+                        z: (n + 1) * segmentLength
+                    },
+                    camera: {},
+                    screen: {}
+                },
+                curve: curve,
+                color: Math.floor(n / rumbleLength) % 2 ? COLORS.DARK : COLORS.LIGHT
+            });
+        }
+
+        function addRoad(enter, hold, leave, curve) {
+            var n;
+            for (n = 0; n < enter; n++)
+                addSegment(Util.easeIn(0, curve, n / enter));
+            for (n = 0; n < hold; n++)
+                addSegment(curve);
+            for (n = 0; n < leave; n++)
+                addSegment(Util.easeInOut(curve, 0, n / leave));
+        }
+
+        var ROAD = {
+            LENGTH: {
+                NONE: 0,
+                SHORT: 25,
+                MEDIUM: 50,
+                LONG: 100
+            },
+            CURVE: {
+                NONE: 0,
+                EASY: 2,
+                MEDIUM: 4,
+                HARD: 6
+            }
+        };
+
+        function addStraight(num) {
+            num = num || ROAD.LENGTH.MEDIUM;
+            addRoad(num, num, num, 0);
+        }
+
+        function addCurve(num, curve) {
+            num = num || ROAD.LENGTH.MEDIUM;
+            curve = curve || ROAD.CURVE.MEDIUM;
+            addRoad(num, num, num, curve);
+        }
+
+        function addSCurves() {
+            addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, -ROAD.CURVE.EASY);
+            addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.CURVE.MEDIUM);
+            addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.CURVE.EASY);
+            addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, -ROAD.CURVE.EASY);
+            addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, -ROAD.CURVE.MEDIUM);
+        }
+
         function resetRoad() {
             segments = [];
-            for (var n = 0; n < 500; n++) {
-                segments.push({
-                    index: n,
-                    p1: {
-                        world: {
-                            z: n * segmentLength
-                        },
-                        camera: {},
-                        screen: {}
-                    },
-                    p2: {
-                        world: {
-                            z: (n + 1) * segmentLength
-                        },
-                        camera: {},
-                        screen: {}
-                    },
-                    color: Math.floor(n / rumbleLength) % 2 ? COLORS.DARK : COLORS.LIGHT
-                });
-            }
+
+            addStraight(ROAD.LENGTH.SHORT / 4);
+            addSCurves();
+            addStraight(ROAD.LENGTH.LONG);
+            addCurve(ROAD.LENGTH.MEDIUM, ROAD.CURVE.MEDIUM);
+            addCurve(ROAD.LENGTH.LONG, ROAD.CURVE.MEDIUM);
+            addStraight();
+            addSCurves();
+            addCurve(ROAD.LENGTH.LONG, -ROAD.CURVE.MEDIUM);
+            addCurve(ROAD.LENGTH.LONG, ROAD.CURVE.MEDIUM);
+            addStraight();
+            addSCurves();
+            addCurve(ROAD.LENGTH.LONG, -ROAD.CURVE.EASY);
 
             segments[findSegment(playerZ).index + 2].color = COLORS.START;
             segments[findSegment(playerZ).index + 3].color = COLORS.START;
@@ -457,7 +541,6 @@
 
         //=========================================================================
     </script>
-
 </body>
 
 </html>
