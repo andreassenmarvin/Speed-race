@@ -129,7 +129,7 @@
         var sprites = null; // our spritesheet (loaded below)
         var resolution = null; // scaling factor to provide resolution independence (computed)
         var roadWidth =
-        2000; // actually half the roads width, easier math if the road spans from -roadWidth to +roadWidth
+            2000; // actually half the roads width, easier math if the road spans from -roadWidth to +roadWidth
         var segmentLength = 200; // length of a single segment
         var rumbleLength = 3; // number of segments per red/white rumble strip
         var trackLength = null; // z length of entire track (computed)
@@ -144,13 +144,13 @@
         var position = 0; // current camera Z position (add playerZ to get player's absolute Z position)
         var speed = 0; // current speed
         var maxSpeed = segmentLength /
-        step; // top speed (ensure we can't move more than 1 segment in a single frame to make collision detection easier)
+            step; // top speed (ensure we can't move more than 1 segment in a single frame to make collision detection easier)
         var accel = maxSpeed / 5; // acceleration rate - tuned until it 'felt' right
         var breaking = -maxSpeed; // deceleration rate when braking
         var decel = -maxSpeed / 5; // 'natural' deceleration rate when neither accelerating, nor braking
         var offRoadDecel = -maxSpeed / 2; // off road deceleration is somewhere in between
         var offRoadLimit = maxSpeed /
-        4; // limit when off road deceleration no longer applies (e.g. you can always go at least this speed even when off road)
+            4; // limit when off road deceleration no longer applies (e.g. you can always go at least this speed even when off road)
 
         var keyLeft = false;
         var keyRight = false;
@@ -166,7 +166,7 @@
             var playerSegment = findSegment(position + playerZ);
             var speedPercent = speed / maxSpeed;
             var dx = dt * 2 *
-            speedPercent; // at top speed, should be able to cross from left to right (-1 to 1) in 1 second
+                speedPercent; // at top speed, should be able to cross from left to right (-1 to 1) in 1 second
 
             position = Util.increase(position, dt * speed, trackLength);
 
