@@ -5,21 +5,40 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="styles.css">
 
     <title>Speed Race</title>
 </head>
 
 <body>
-    <table id="controls">
-        <tr>
-            <td colspan="2">
-                <a href='v1.straight.html'>straight</a> |
-                <a href='v2.curves.html'>curves</a> |
-                <a href='v3.hills.html'>hills</a> |
-                <a href='v4.final.html'>final</a>
-            </td>
-        </tr>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="index.html" style="font-size: 1.5rem; letter-spacing: 0.1rem;">Speed<span style="color: red;">Race</span></a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav navigation">
+              <li class="nav-item">
+                <a class="nav-link" href="v1.straight.html">Straight</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="v2.curves.html">Curves</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="v3.hills.html">Hills</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="v4.final.html">Race</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+    <table id="controls" style="margin-top: 30px;">
+      
         <tr>
             <td id="fps" colspan="2" align="right"></td>
         </tr>
@@ -71,21 +90,20 @@
         <p>Use the <b>arrow keys</b> to drive the car.</p>
     </div>
 
-    <div id="racer">
+    <div id="racer" style="margin-top: 30px;">
         <canvas id="canvas">
             Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
         </canvas>
         Loading...
     </div>
 
-    <audio id='music'>
-        <source src="music/racer.ogg">
-        <source src="music/racer.mp3">
-    </audio>
+    <embed src="music/racer.mp3" autostart="true" width="2" height="0">
+
     <span id="mute"></span>
 
-    <script src="/js/stats.js"></script>
-    <script src="/js/script.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script src="js/script.js"></script>
 </body>
 
 </html>

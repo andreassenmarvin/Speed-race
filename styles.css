@@ -3,9 +3,7 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-/****************************************/
 /* common styles used for v1 through v4 */
-/****************************************/
 #stats {
     border: 2px solid black;
 }
@@ -15,6 +13,7 @@ body {
     float: left;
     padding: 1em;
     font-size: 0.7em;
+    color: white;
 }
 
 #controls th {
@@ -29,6 +28,7 @@ body {
     padding: 1em;
     border: 1px solid black;
     box-shadow: 0 0 5px black;
+    color: white;
 }
 
 #racer {
@@ -64,9 +64,7 @@ body {
     background-position: -32px 0px;
 }
 
-/**************************************************/
 /* rudimentary heads up display (only used in v4) */
-/**************************************************/
 
 #hud {
     position: absolute;
