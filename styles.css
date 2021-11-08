@@ -9,7 +9,17 @@ body {
 
 .navigation li a {
     text-decoration: none;
-    color: rgb(235, 8, 8);
+    color: red;
     padding: 30px;
     font-size: 20px;
+    transition: all linear .3s;
+}
+
+.navigation li a:hover {
+    color: rgb(196, 8, 8);
+}
+
+#car-bg {
+    display: block;
+    margin: auto;
 }
